@@ -85,6 +85,7 @@ class SupaEmailAuth extends StatefulWidget {
 
   final bool registrationEnabled;
   final bool passwordResetEnabled;
+  final bool loginSubmitEnabled;
 
   /// {@macro supa_email_auth}
   const SupaEmailAuth({
@@ -98,7 +99,8 @@ class SupaEmailAuth extends StatefulWidget {
     this.extraMetadata,
     this.localization = const SupaEmailAuthLocalization(),
     this.registrationEnabled = false,
-    this.passwordResetEnabled = false
+    this.passwordResetEnabled = false,
+    this.loginSubmitEnabled = false
   }) : super(key: key);
 
   @override
@@ -196,19 +198,17 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                         ])
                     .expand((element) => element),
               ElevatedButton(
-                child: (_isLoading)
-                    ? SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          strokeWidth: 1.5,
-                        ),
-                      )
-                    : Text(_isSigningIn
-                        ? localization.signIn
-                        : localization.signUp),
-                onPressed: () async {
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.disabled)) {
+                        return Colors.orange.withOpacity(0.5); // Change opacity when disabled
+                      }
+                      return Colors.orange; // Default color
+                    },
+                  )
+                ),
+                onPressed: !widget.loginSubmitEnabled ?  null : () async {
                   if (!_formKey.currentState!.validate()) {
                     return;
                   }
@@ -251,6 +251,20 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                     });
                   }
                 },
+                child: (_isLoading)
+                    ? SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          strokeWidth: 1.5,
+                        ),
+                      )
+                    : Text(_isSigningIn
+                        ? localization.signIn.toUpperCase()
+                        : localization.signUp.toUpperCase(),
+                        style: const TextStyle(color: Colors.white),
+                        ),
               ),
               spacer(16),
               if (widget.passwordResetEnabled && _isSigningIn) ...[
