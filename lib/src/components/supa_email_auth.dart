@@ -253,7 +253,7 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                 },
               ),
               spacer(16),
-              if (_isSigningIn) ...[
+              if (widget.passwordResetEnabled && _isSigningIn) ...[
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -302,16 +302,14 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                 child: Text(localization.sendPasswordReset),
               ),
               spacer(16),
-              if (widget.passwordResetEnabled) ...[
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _forgotPassword = false;
-                    });
-                  },
-                  child: Text(localization.backToSignIn),
-                )
-              ],
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _forgotPassword = false;
+                  });
+                },
+                child: Text(localization.backToSignIn),
+              ),
             ],
             spacer(16),
           ],
