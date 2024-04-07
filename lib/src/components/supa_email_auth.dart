@@ -83,6 +83,9 @@ class SupaEmailAuth extends StatefulWidget {
   /// Localization for the form
   final SupaEmailAuthLocalization localization;
 
+  final bool registrationEnabled;
+  final bool passwordResetEnabled;
+
   /// {@macro supa_email_auth}
   const SupaEmailAuth({
     Key? key,
@@ -94,6 +97,8 @@ class SupaEmailAuth extends StatefulWidget {
     this.metadataFields,
     this.extraMetadata,
     this.localization = const SupaEmailAuthLocalization(),
+    this.registrationEnabled = false,
+    this.passwordResetEnabled = false
   }) : super(key: key);
 
   @override
@@ -258,20 +263,22 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                   child: Text(localization.forgotPassword),
                 ),
               ],
-              TextButton(
-                key: const ValueKey('toggleSignInButton'),
-                onPressed: () {
-                  setState(() {
-                    _forgotPassword = false;
-                    _isSigningIn = !_isSigningIn;
-                  });
-                },
-                child: Text(_isSigningIn
+              if (widget.registrationEnabled) ...[
+                TextButton(
+                  key: const ValueKey('toggleSignInButton'),
+                  onPressed: () {
+                    setState(() {
+                      _forgotPassword = false;
+                      _isSigningIn = !_isSigningIn;
+                    });
+                  },
+                  child: Text(_isSigningIn
                     ? localization.dontHaveAccount
                     : localization.haveAccount),
-              ),
+                )
+              ],
             ],
-            if (_isSigningIn && _forgotPassword) ...[
+            if (widget.passwordResetEnabled && _isSigningIn && _forgotPassword) ...[
               spacer(16),
               ElevatedButton(
                 onPressed: () async {
