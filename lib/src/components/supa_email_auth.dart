@@ -253,7 +253,7 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                 },
               ),
               spacer(16),
-              if (_isSigningIn) ...[
+              if (widget.passwordResetEnabled && _isSigningIn) ...[
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -278,7 +278,7 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                 )
               ],
             ],
-            if (widget.passwordResetEnabled && _isSigningIn && _forgotPassword) ...[
+            if (_isSigningIn && _forgotPassword) ...[
               spacer(16),
               ElevatedButton(
                 onPressed: () async {
