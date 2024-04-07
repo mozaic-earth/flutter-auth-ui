@@ -202,9 +202,9 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                   backgroundColor: MaterialStateProperty.resolveWith<Color>(
                     (Set<MaterialState> states) {
                       if (states.contains(MaterialState.disabled)) {
-                        return Colors.orange.withOpacity(0.5); // Change opacity when disabled
+                        return Color(0xfff97316).withOpacity(0.5); // Change opacity when disabled
                       }
-                      return Colors.orange; // Default color
+                      return Color(0xfff97316); // Default color
                     },
                   )
                 ),
@@ -263,7 +263,16 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                     : Text(_isSigningIn
                         ? localization.signIn.toUpperCase()
                         : localization.signUp.toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(
+                          color: Color(0xff03121c),
+                          fontSize: 16,
+                          decoration: TextDecoration.none,
+                          fontFamily: 'SFPro-Bold',
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.w700,
+                          height: 20 / 16,
+                          letterSpacing: 0.64,
+                        ),
                         ),
               ),
               spacer(16),
