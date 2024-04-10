@@ -17,12 +17,15 @@ class SupaResetPassword extends StatefulWidget {
   /// Localization for the form
   final SupaResetPasswordLocalization localization;
 
+final bool loginSubmitEnabled;
+
   const SupaResetPassword({
     Key? key,
     this.accessToken,
     required this.onSuccess,
     this.onError,
     this.localization = const SupaResetPasswordLocalization(),
+    this.loginSubmitEnabled = false
   }) : super(key: key);
 
   @override
@@ -63,11 +66,17 @@ class _SupaResetPasswordState extends State<SupaResetPassword> {
           ),
           spacer(16),
           ElevatedButton(
-            child: Text(
-              localization.updatePassword,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.disabled)) {
+                    return Color(0xfff97316).withOpacity(0.5); // Change opacity when disabled
+                  }
+                  return Color(0xfff97316); // Default color
+                },
+              )
             ),
-            onPressed: () async {
+            onPressed: !widget.loginSubmitEnabled ?  null : () async {
               if (!_formKey.currentState!.validate()) {
                 return;
               }
@@ -94,6 +103,19 @@ class _SupaResetPasswordState extends State<SupaResetPassword> {
                 }
               }
             },
+            child: Text(
+              localization.updatePassword.toUpperCase(),
+              style: const TextStyle(
+                color: Color(0xff03121c),
+                fontSize: 16,
+                decoration: TextDecoration.none,
+                fontFamily: 'SFPro-Bold',
+                fontStyle: FontStyle.normal,
+                fontWeight: FontWeight.w700,
+                height: 20 / 16,
+                letterSpacing: 0.64,
+              ),
+            ),
           ),
           spacer(10),
         ],
