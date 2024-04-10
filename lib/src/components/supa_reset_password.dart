@@ -72,6 +72,7 @@ class _SupaResetPasswordState extends State<SupaResetPassword> {
                 return;
               }
               try {
+                await supabase.auth.setSession(widget.accessToken!); // Set a session before attemping to make an auth call
                 final response = await supabase.auth.updateUser(
                   UserAttributes(
                     password: _password.text,
