@@ -38,6 +38,9 @@ class MetaDataField {
   });
 }
 
+// Enum representing the state of the form
+enum EmailAuthFormType { signIn, signUp, forgotPassword }
+
 /// {@template supa_email_auth}
 /// UI component to create email and password signup/ signin form
 ///
@@ -68,6 +71,12 @@ class SupaEmailAuth extends StatefulWidget {
   /// Callback for sending the password reset email
   final void Function()? onPasswordResetEmailSent;
 
+  /// Set initial form type
+  final EmailAuthFormType? formType;
+
+  /// Callback for form type changes
+  final void Function(EmailAuthFormType formType)? onFormTypeChange;
+
   /// Callback for when the auth action threw an exception
   ///
   /// If set to `null`, a snack bar with error color will show up.
@@ -94,6 +103,8 @@ class SupaEmailAuth extends StatefulWidget {
     required this.onSignInComplete,
     required this.onSignUpComplete,
     this.onPasswordResetEmailSent,
+    this.formType = EmailAuthFormType.signIn,
+    this.onFormTypeChange,
     this.onError,
     this.metadataFields,
     this.extraMetadata,
@@ -114,17 +125,29 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
   late final Map<MetaDataField, TextEditingController> _metadataControllers;
 
   bool _isLoading = false;
+  EmailAuthFormType _formType = EmailAuthFormType.signIn;
 
-  /// The user has pressed forgot password button
-  bool _forgotPassword = false;
+  void _setFormType (EmailAuthFormType value) {
+    setState(() {_formType = value;});
+    widget.onFormTypeChange?.call(value);
+  }
 
-  bool _isSigningIn = true;
+  bool _isSigningIn () {
+    return _formType == EmailAuthFormType.signIn;
+  }
+  bool _isSigningUp () {
+    return _formType == EmailAuthFormType.signUp;
+  }
+  bool _forgotPassword () {
+    return _formType == EmailAuthFormType.forgotPassword;
+  }
 
   @override
   void initState() {
     super.initState();
     _metadataControllers = Map.fromEntries((widget.metadataFields ?? []).map(
         (metadataField) => MapEntry(metadataField, TextEditingController())));
+    _formType = widget.formType ?? EmailAuthFormType.signIn;
   }
 
   @override
@@ -140,6 +163,7 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
   @override
   Widget build(BuildContext context) {
     final localization = widget.localization;
+
     return AutofillGroup(
       child: Form(
         key: _formKey,
@@ -163,10 +187,10 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
               ),
               controller: _emailController,
             ),
-            if (!_forgotPassword) ...[
+            if (!_forgotPassword()) ...[
               spacer(16),
               TextFormField(
-                autofillHints: _isSigningIn
+                autofillHints: _isSigningIn()
                     ? [AutofillHints.password]
                     : [AutofillHints.newPassword],
                 validator: (value) {
@@ -183,7 +207,7 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                 controller: _passwordController,
               ),
               spacer(16),
-              if (widget.metadataFields != null && !_isSigningIn)
+              if (widget.metadataFields != null && _isSigningUp())
                 ...widget.metadataFields!
                     .map((metadataField) => [
                           TextFormField(
@@ -216,7 +240,7 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                     _isLoading = true;
                   });
                   try {
-                    if (_isSigningIn) {
+                    if (_isSigningIn()) {
                       final response = await supabase.auth.signInWithPassword(
                         email: _emailController.text.trim(),
                         password: _passwordController.text.trim(),
@@ -260,7 +284,7 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                           strokeWidth: 1.5,
                         ),
                       )
-                    : Text(_isSigningIn
+                    : Text(_isSigningIn()
                         ? localization.signIn.toUpperCase()
                         : localization.signUp.toUpperCase(),
                         style: const TextStyle(
@@ -273,15 +297,13 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                           height: 20 / 16,
                           letterSpacing: 0.64,
                         ),
-                        ),
+                      ),
               ),
               spacer(16),
-              if (widget.passwordResetEnabled && _isSigningIn) ...[
+              if (widget.passwordResetEnabled && _isSigningIn()) ...[
                 TextButton(
                   onPressed: () {
-                    setState(() {
-                      _forgotPassword = true;
-                    });
+                    _setFormType(EmailAuthFormType.forgotPassword);
                   },
                   child: Text(localization.forgotPassword),
                 ),
@@ -290,21 +312,28 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
                 TextButton(
                   key: const ValueKey('toggleSignInButton'),
                   onPressed: () {
-                    setState(() {
-                      _forgotPassword = false;
-                      _isSigningIn = !_isSigningIn;
-                    });
+                    _setFormType(_isSigningIn() ? EmailAuthFormType.signUp : EmailAuthFormType.signIn);
                   },
-                  child: Text(_isSigningIn
+                  child: Text(_isSigningIn()
                     ? localization.dontHaveAccount
                     : localization.haveAccount),
                 )
               ],
             ],
-            if (_isSigningIn && _forgotPassword) ...[
+            if (_forgotPassword()) ...[
               spacer(16),
               ElevatedButton(
-                onPressed: () async {
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.disabled)) {
+                        return Color(0xfff97316).withOpacity(0.5); // Change opacity when disabled
+                      }
+                      return Color(0xfff97316); // Default color
+                    },
+                  )
+                ),
+                onPressed: _isLoading ? null : () async {
                   try {
                     if (!_formKey.currentState!.validate()) {
                       return;
@@ -315,21 +344,46 @@ class _SupaEmailAuthState extends State<SupaEmailAuth> {
 
                     final email = _emailController.text.trim();
                     await supabase.auth.resetPasswordForEmail(email);
+                    
                     widget.onPasswordResetEmailSent?.call();
+                    _setFormType(EmailAuthFormType.signIn);
+                    setState(() {
+                      _isLoading = false;
+                    });
+                    context.showSnackBar(localization.passwordResetEmailSent);
                   } on AuthException catch (error) {
                     widget.onError?.call(error);
                   } catch (error) {
                     widget.onError?.call(error);
                   }
                 },
-                child: Text(localization.sendPasswordReset),
+                child: (_isLoading)
+                  ? SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      strokeWidth: 1.5,
+                    ),
+                  )
+                  : Text(
+                    localization.sendPasswordReset.toUpperCase(),
+                    style: const TextStyle(
+                      color: Color(0xff03121c),
+                      fontSize: 16,
+                      decoration: TextDecoration.none,
+                      fontFamily: 'SFPro-Bold',
+                      fontStyle: FontStyle.normal,
+                      fontWeight: FontWeight.w700,
+                      height: 20 / 16,
+                      letterSpacing: 0.64,
+                    ),
+                  ),
               ),
               spacer(16),
               TextButton(
                 onPressed: () {
-                  setState(() {
-                    _forgotPassword = false;
-                  });
+                  _setFormType(EmailAuthFormType.signIn);
                 },
                 child: Text(localization.backToSignIn),
               ),

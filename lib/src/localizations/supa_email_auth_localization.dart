@@ -9,6 +9,7 @@ class SupaEmailAuthLocalization {
   final String dontHaveAccount;
   final String haveAccount;
   final String sendPasswordReset;
+  final String passwordResetEmailSent;
   final String backToSignIn;
   final String unexpectedError;
 
@@ -23,7 +24,8 @@ class SupaEmailAuthLocalization {
     this.forgotPassword = 'Forgot your password?',
     this.dontHaveAccount = 'Don\'t have an account? Sign up',
     this.haveAccount = 'Already have an account? Sign in',
-    this.sendPasswordReset = 'Send password reset email',
+    this.sendPasswordReset = 'Request password reset',
+    this.passwordResetEmailSent = 'A password recovery email has been sent',
     this.backToSignIn = 'Back to sign in',
     this.unexpectedError = 'An unexpected error occurred',
   });

@@ -7,6 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupaResetPassword extends StatefulWidget {
   /// accessToken of the user
   final String? accessToken;
+  
+  // PKCE code to exchange for session
+  final String? sessionCode;
 
   /// Method to be called when the auth action is success
   final void Function(UserResponse response) onSuccess;
@@ -22,6 +25,7 @@ final bool loginSubmitEnabled;
   const SupaResetPassword({
     Key? key,
     this.accessToken,
+    this.sessionCode,
     required this.onSuccess,
     this.onError,
     this.localization = const SupaResetPasswordLocalization(),
@@ -62,6 +66,7 @@ class _SupaResetPasswordState extends State<SupaResetPassword> {
               prefixIcon: const Icon(Icons.lock),
               label: Text(localization.enterPassword),
             ),
+            obscureText: true,
             controller: _password,
           ),
           spacer(16),
@@ -81,7 +86,14 @@ class _SupaResetPasswordState extends State<SupaResetPassword> {
                 return;
               }
               try {
-                await supabase.auth.setSession(widget.accessToken!); // Set a session before attemping to make an auth call
+                if (supabase.auth.currentSession == null) {
+                  if (widget.sessionCode != null) {
+                    await supabase.auth.exchangeCodeForSession(widget.sessionCode!);
+                  } else if (widget.accessToken != null) {
+                    await supabase.auth.setSession(widget.accessToken!); // Set a session before attemping to make an auth call
+                  }
+                }
+
                 final response = await supabase.auth.updateUser(
                   UserAttributes(
                     password: _password.text,
